@@ -1,5 +1,6 @@
 {:paths ["src" "resources"]
- :deps {org.clojure/clojure {:mvn/version "1.11.1"}}
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        commons-codec/commons-codec {:mvn/version "1.16.0"}}
  :aliases
  {:cider-clj {:extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
                            mx.cider/enrich-classpath {:mvn/version "1.9.0"}

@@ -28,10 +28,12 @@
   [^String data]
   (Hex/decodeHex (.toCharArray data)))
 
-(defn stream-bytes [is]
-  (let [baos (java.io.ByteArrayOutputStream.)]
-    (io/copy is baos)
-    (.toByteArray baos)))
+(defn stream-bytes
+  "Stream bytes from the input stream into a byte array."
+  [input-stream]
+  (let [byte-array-output-stream (java.io.ByteArrayOutputStream.)]
+    (io/copy input-stream byte-array-output-stream)
+    (.toByteArray byte-array-output-stream)))
 
 (defn test-deflater-input [file]
   (with-open [in (java.util.zip.DeflaterInputStream. (clojure.java.io/input-stream file))]

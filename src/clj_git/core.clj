@@ -105,14 +105,37 @@
      :author/timestamp timestamp
      :author/timezone timezone}))
 
+(defn drop-line-prefix
+  "Drops the line prefix separated with space from the rest of the line."
+  [line]
+  (when line
+    (apply str (rest (drop-while (fn [char]
+                                   (not (s/blank? (str char))))
+                                 line)))))
+
 (defmethod parse-payload :commit [header payload-bytes]
-  (let [commit-str (bytes->str payload-bytes)
-        [tree-line parent-line author-line committer-line _empty-line & rest] (s/split commit-str #"\n")]
-    {:commit/tree tree-line
-     :commit/parent parent-line
+  (let [get-field-fn (fn [starts-with lines]
+                       (first (filter (fn [line]
+                                        (s/starts-with? line starts-with))
+                                      lines)))
+        commit-str (bytes->str payload-bytes)
+        commit-lines (s/split commit-str #"\n")
+        tree-line (get-field-fn "tree" commit-lines)
+        parent-line (get-field-fn "parent" commit-lines)
+        author-line (get-field-fn "author" commit-lines)
+        committer-line (get-field-fn "committer" commit-lines)
+        message-lines (rest (drop-while (fn [line]
+                                          (not (s/blank? line)))
+                                        commit-lines))
+        tree (drop-line-prefix tree-line)
+        parent (drop-line-prefix parent-line)]
+    (doseq [line commit-lines]
+      (println line))
+    {:commit/tree tree
+     :commit/parent parent
      :commit/author (parse-author-line author-line)
      :commit/committer (parse-author-line committer-line)
-     :commit/message (s/join "\n" rest)}))
+     :commit/message (s/join "\n" message-lines)}))
 
 (defmulti serialize-payload (fn [format object]
                               [format (get-in object [:header :object-type])]))
@@ -125,19 +148,32 @@
         object-length (:payload-length header)]
     (s/join " " [object-type (str object-length)])))
 
+(defmethod serialize-payload [:git :blob] [_format object]
+  (let [header-str (header-to-string (:header object))
+        header-bytes (str->bytes header-str)]
+    (byte-array (concat header-bytes (byte-array [0]) (:payload object)))))
+
 (defmethod serialize-payload [:git :commit] [_format object]
   (let [payload (:payload object)
-        commit-fields [(str "tree " (:commit/tree payload))
-                       (str "parent " (:commit/parent payload))
-                       (str "author " (author-line-to-string (:commit/author payload)))
-                       (str "committer " (author-line-to-string (:commit/committer payload)))
-                       (:commit/message payload)]
-        payload-bytes (str->bytes (s/join "\n" commit-fields))
+        commit-fields (filter (fn [elem]
+                                (not (nil? elem)))
+                              [(str "tree " (:commit/tree payload))
+                               (when (:commit/parent payload)
+                                 (str "parent " (:commit/parent payload)))
+                               (str "author " (author-line-to-string (:commit/author payload)))
+                               (str "committer " (author-line-to-string (:commit/committer payload)))
+                               ""
+                               (:commit/message payload)
+                               ""])
+        payload-str (s/join "\n" commit-fields)
+        payload-bytes (str->bytes payload-str)
         payload-length (count payload-bytes)
         header (assoc (:header object)
                       :payload-length payload-length)
         header-bytes (str->bytes (header-to-string header))]
-    (byte-array (concat header-bytes [0] payload-bytes))))
+    (println payload-str)
+    (byte-array (concat header-bytes [0] payload-bytes))
+    ))
 
 (defn parse-object [bytes]
   (let [header-bytes (byte-array (take-while not-null? bytes))
@@ -159,6 +195,8 @@
 (def test-tree "/home/mael/tmp/git/.git/objects/0f/30f1dd43dc05c68f5d0852332d51b0d3d0a93b")
 
 (def test-commit "/home/mael/tmp/git/.git/objects/18/ead1127c804802bf61e3899a19b4744258726e")
+
+(def test-commit2 "/home/mael/tmp/git/.git/objects/ac/9f899d42d92be285507197610334b2b05c445d")
 
 (def laptop-test-commit1 "/home/mael/tmp/git/.git/objects/67/3f850c4ef897f72ab834071cdeb0a634249e65")
 

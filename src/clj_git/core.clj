@@ -166,7 +166,7 @@
                                (:commit/message payload)
                                ""])
         payload-str (s/join "\n" commit-fields)
-        payload-bytes (hex->bytes payload-str)
+        payload-bytes (str->bytes payload-str)
         payload-length (count payload-bytes)
         header (assoc (:header object)
                       :payload-length payload-length)

@@ -86,7 +86,7 @@
                    :tree-entry/hash (bytes->hex hash-block)}
      :rest rest-of-bytes}))
 
-(defmethod parse-payload :tree [header payload-bytes]
+(defmethod parse-payload :tree [_header payload-bytes]
   (loop [remaining-bytes payload-bytes
          tree-entries []]
     (if (empty? remaining-bytes)
@@ -147,7 +147,9 @@
     (s/join " " [object-type (str object-length)])))
 
 (defmethod serialize-payload [:git :blob] [_format object]
-  (let [header-str (header-to-string (:header object))
+  (let [header (assoc (:header object)
+                      :payload-length (count (:payload object)))
+        header-str (header-to-string header)
         header-bytes (str->bytes header-str)]
     (byte-array (concat header-bytes (byte-array [0]) (:payload object)))))
 
@@ -164,12 +166,31 @@
                                (:commit/message payload)
                                ""])
         payload-str (s/join "\n" commit-fields)
-        payload-bytes (str->bytes payload-str)
+        payload-bytes (hex->bytes payload-str)
         payload-length (count payload-bytes)
         header (assoc (:header object)
                       :payload-length payload-length)
         header-bytes (str->bytes (header-to-string header))]
     (byte-array (concat header-bytes [0] payload-bytes))))
+
+(defn tree-entry->str [entry]
+  (let [variable-length-str (str (:tree-entry/permissions entry)
+                                 " "
+                                 (:tree-entry/name entry))
+        variable-length-bytes (str->bytes variable-length-str)
+        hash-bytes (hex->bytes (:tree-entry/hash entry))]
+    (byte-array (concat variable-length-bytes
+                        (byte-array [0])
+                        hash-bytes))))
+
+(defmethod serialize-payload [:git :tree] [_format object]
+  (let [entries (:payload object)
+        tree-entry-rows (map tree-entry->str entries)
+        tree-entry-bytes (byte-array (apply concat tree-entry-rows))
+        header (assoc (:header object)
+                      :payload-length (count tree-entry-bytes))
+        header-bytes (str->bytes (header-to-string header))]
+    (byte-array (concat header-bytes (byte-array [0]) tree-entry-bytes))))
 
 (defn parse-object [bytes]
   (let [header-bytes (byte-array (take-while not-null? bytes))

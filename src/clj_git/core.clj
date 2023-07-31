@@ -113,7 +113,7 @@
                                    (not (s/blank? (str char))))
                                  line)))))
 
-(defmethod parse-payload :commit [header payload-bytes]
+(defmethod parse-payload :commit [_header payload-bytes]
   (let [get-field-fn (fn [starts-with lines]
                        (first (filter (fn [line]
                                         (s/starts-with? line starts-with))
@@ -129,8 +129,6 @@
                                         commit-lines))
         tree (drop-line-prefix tree-line)
         parent (drop-line-prefix parent-line)]
-    (doseq [line commit-lines]
-      (println line))
     {:commit/tree tree
      :commit/parent parent
      :commit/author (parse-author-line author-line)
@@ -171,9 +169,7 @@
         header (assoc (:header object)
                       :payload-length payload-length)
         header-bytes (str->bytes (header-to-string header))]
-    (println payload-str)
-    (byte-array (concat header-bytes [0] payload-bytes))
-    ))
+    (byte-array (concat header-bytes [0] payload-bytes))))
 
 (defn parse-object [bytes]
   (let [header-bytes (byte-array (take-while not-null? bytes))

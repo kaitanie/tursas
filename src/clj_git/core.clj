@@ -30,5 +30,5 @@
 
 
 (defn make-blob [m]
-  (str {:header {:object-type :blob}
-        :payload m}))
+  {:header {:object-type :blob}
+   :payload m})

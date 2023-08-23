@@ -150,8 +150,12 @@
   (let [header (assoc (:header object)
                       :payload-length (count (:payload object)))
         header-str (header-to-string header)
-        header-bytes (str->bytes header-str)]
-    (byte-array (concat header-bytes (byte-array [0]) (:payload object)))))
+        header-bytes (str->bytes header-str)
+        payload (:payload object)
+        payload-bytes (if (bytes? payload)
+                        payload
+                        (str->bytes (str payload)))]
+    (byte-array (concat header-bytes (byte-array [0]) payload-bytes))))
 
 (defmethod serialize-payload [:git :commit] [_format object]
   (let [payload (:payload object)

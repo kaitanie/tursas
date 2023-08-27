@@ -5,21 +5,38 @@
 (defmethod storage-api/test-mm :in-memory-map [ctx value]
   "In memory map implementation called.")
 
+(defn make-repository []
+  {:objects {}
+   :refs {:branches {"master" nil}
+          :tags {}}})
+
+(defn add-object [repository hash object]
+  (update-in repository [:objects] assoc hash object))
+
+(defn get-object [repository hash]
+  (get-in repository [:objects hash]))
+
+(defn update-branch-ref [repository branch-name hash]
+  (if (get-object repository hash)
+    (update-in repository [:refs :branches] assoc branch-name hash)
+    (throw (ex-info "Hash not found in object store"
+                    {:hash hash}))))
+
 (defmethod storage-api/initialize! :in-memory-map [repo-config]
   (assoc repo-config
-         :repository {:objects (ref {})
-                      :branches [{"master" nil}]}))
+         :repository (ref (make-repository))))
 
 (defmethod storage-api/get-object! :in-memory-map [repo object-id]
-  (let [objects @(get-in repo [:repository :objects])]
-    (if-let [result (get objects object-id)]
+  (let [repository @(get-in repo [:repository])]
+    (if-let [result (get-object repository object-id)]
       result
       (throw (ex-info "Object not found in repository"
                       {:object-id object-id})))))
 
 (defmethod storage-api/put-object! :in-memory-map [repo object]
   (let [hash (hash-utils/hash-it repo (hash-utils/serialize-payload :git object))
-        objects-ref (get-in repo [:repository :objects])
+        repository-ref (get-in repo [:repository])
         object-payload-with-header (select-keys object [:header :payload])]
-    (dosync (alter objects-ref assoc hash object-payload-with-header))
+    (dosync
+     (alter repository-ref add-object hash object-payload-with-header))
     hash))

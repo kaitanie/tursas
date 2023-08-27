@@ -24,6 +24,7 @@
 
 (defmethod hash-object :commit [repository object])
 
+
 (defn make-sha1-map-repo-config []
   {:repository/hash-implementation :sha1
    :repository/storage-engine :in-memory-map})
@@ -32,3 +33,7 @@
 (defn make-blob [m]
   {:header {:object-type :blob}
    :payload m})
+
+(defn make-tree [entries]
+  {:header {:object-type :tree}
+   :payload })

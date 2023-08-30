@@ -7,6 +7,9 @@
 (defn dispatch-by-storage-engine [repo-config]
   (:repository/storage-engine repo-config))
 
+(defmulti get-ref-revision! (fn [repo _ref-type _ref-name]
+                              (dispatch-by-storage-engine repo)))
+
 (defmulti initialize! dispatch-by-storage-engine)
 
 (defmulti get-object! (fn [repo _object-id]
@@ -14,5 +17,3 @@
 
 (defmulti put-object! (fn [repo _object]
                         (dispatch-by-storage-engine repo)))
-
-(defmulti commit! (fn [repo branch-name [objects]]))

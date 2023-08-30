@@ -34,6 +34,11 @@
   {:header {:object-type :blob}
    :payload m})
 
-(defn make-tree [entries]
-  {:header {:object-type :tree}
-   :payload })
+(defn make-tree [key-blob-ids]
+  (let [entries-with-perms (map (fn [key-blob]
+                                  {:tree-entry/permissions "100644"
+                                   :tree-entry/name (:key key-blob)
+                                   :tree-entry/hash (:hash key-blob)})
+                                key-blob-ids)]
+    {:header {:object-type :tree}
+     :payload entries-with-perms}))

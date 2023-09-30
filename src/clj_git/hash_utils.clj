@@ -80,9 +80,9 @@
         remaining-entry-bytes (byte-array (rest (drop-while not-null? bytes)))
         hash-block (byte-array (take 20 remaining-entry-bytes))
         rest-of-bytes (byte-array (drop 20 remaining-entry-bytes))
-        [permissions entry-name] (s/split (bytes->str variable-length-block) #" ")]
+        [permissions & entry-name] (s/split (bytes->str variable-length-block) #" ")]
     {:first-entry {:tree-entry/permissions permissions
-                   :tree-entry/name entry-name
+                   :tree-entry/name (s/join " " entry-name)
                    :tree-entry/hash (bytes->hex hash-block)}
      :rest rest-of-bytes}))
 

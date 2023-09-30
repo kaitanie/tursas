@@ -29,16 +29,32 @@
   {:repository/hash-implementation :sha1
    :repository/storage-engine :in-memory-map})
 
-
 (defn make-blob [m]
   {:header {:object-type :blob}
    :payload m})
 
+(def default-key-permissions "100644")
+
 (defn make-tree [key-blob-ids]
   (let [entries-with-perms (map (fn [key-blob]
-                                  {:tree-entry/permissions "100644"
+                                  {:tree-entry/permissions default-key-permissions
                                    :tree-entry/name (:key key-blob)
                                    :tree-entry/hash (:hash key-blob)})
                                 key-blob-ids)]
     {:header {:object-type :tree}
      :payload entries-with-perms}))
+
+(defn get-commit-root-tree [repository branch-name]
+  (let [commit-id (storage-api/get-ref-revision! repository :heads branch-name)]
+    (if commit-id
+      (let [commit (storage-api/get-object! repository commit-id)
+            tree-id (:commit/tree-id commit)]
+        (storage-api/get-object! repository tree-id))
+      nil)))
+
+(defn tree-assoc-blob [tree key blob-id]
+  (let [tree-entry 1]))
+
+(defn add-key-value [repository key value]
+  (let [blob (make-blob value)
+        blob-id (storage-api/put-object! repository blob)]))

@@ -88,11 +88,12 @@
 
 (defmethod parse-payload :tree [_header payload-bytes]
   (loop [remaining-bytes payload-bytes
-         tree-entries []]
+         tree-entries {}]
     (if (empty? remaining-bytes)
       tree-entries
-      (let [parse-result (pop-tree-entry remaining-bytes)]
-        (recur (:rest parse-result) (conj tree-entries (:first-entry parse-result)))))))
+      (let [parse-result (pop-tree-entry remaining-bytes)
+            tree-entry (:first-entry parse-result)]
+        (recur (:rest parse-result) (assoc tree-entries (:tree-entry/name tree-entry) tree-entry))))))
 
 (defn parse-author-line
   "Drop the first heading of the author "
@@ -188,7 +189,7 @@
                         hash-bytes))))
 
 (defmethod serialize-payload [:git :tree] [_format object]
-  (let [entries (:payload object)
+  (let [entries (sort-by :tree-entry/name (vals (:payload object)))
         tree-entry-rows (map tree-entry->str entries)
         tree-entry-bytes (byte-array (apply concat tree-entry-rows))
         header (assoc (:header object)

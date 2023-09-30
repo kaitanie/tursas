@@ -7,7 +7,7 @@
 
 (defn make-repository []
   {:objects {}
-   :refs {:branches {"master" nil}
+   :refs {:heads {"master" nil}
           :tags {}}})
 
 (defn add-object [repository hash object]
@@ -40,3 +40,6 @@
     (dosync
      (alter repository-ref add-object hash object-payload-with-header))
     hash))
+
+(defmethod storage-api/get-ref-revision! :in-memory-map [repo ref-type ref-name]
+  (get-in repo [:refs ref-type ref-name]))

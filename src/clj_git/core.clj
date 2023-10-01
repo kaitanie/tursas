@@ -44,14 +44,6 @@
     {:header {:object-type :tree}
      :payload entries-with-perms}))
 
-(defn get-commit-root-tree [repository branch-name]
-  (let [commit-id (storage-api/get-ref-revision! repository :heads branch-name)]
-    (if commit-id
-      (let [commit (storage-api/get-object! repository commit-id)
-            tree-id (:commit/tree-id commit)]
-        (storage-api/get-object! repository tree-id))
-      nil)))
-
 (defn make-tree []
   {:header {:object-type :tree}
    :payload {}})
@@ -68,3 +60,27 @@
 (defn add-key-value [repository key value]
   (let [blob (make-blob value)
         blob-id (storage-api/put-object! repository blob)]))
+
+(defn get-commit-root-tree [repository branch-name]
+  (let [commit-id (storage-api/get-ref-revision! repository :heads branch-name)]
+    (if commit-id
+      (let [commit (storage-api/get-object! repository commit-id)
+            tree-id (:commit/tree-id commit)]
+        (storage-api/get-object! repository tree-id))
+      (make-tree))))
+
+(defn make-commit [author-name parent-commit-id tree-id]
+  {:header {:object-type :commit}
+   :payload {:commit/author author-name
+             :commit/committer author-name
+             :commit/parent parent-commit-id
+             :commit/tree tree-id}})
+
+(defn commit [repository branch-name key value]
+  (let [tree (get-commit-root-tree repository branch-name)
+        parent-commit (storage-api/get-ref-revision! repository :heads branch-name)
+        blob (make-blob value)
+        blob-id (storage-api/put-object! repository blob)
+        updated-tree (tree-assoc-blob tree key blob-id)
+        tree-id (storage-api/put-object! repository updated-tree)]
+    ))

@@ -115,23 +115,29 @@
                                  line)))))
 
 (defmethod parse-payload :commit [_header payload-bytes]
-  (let [get-field-fn (fn [starts-with lines]
-                       (first (filter (fn [line]
-                                        (s/starts-with? line starts-with))
-                                      lines)))
+  (let [get-all-fields-fn (fn [starts-with lines]
+                            (filter (fn [line]
+                                      (s/starts-with? line starts-with))
+                                    lines))
+        get-field-fn (fn [starts-with lines]
+                       (first (get-all-fields-fn starts-with lines)))
+        ;; get-field-fn (fn [starts-with lines]
+        ;;                (first (filter (fn [line]
+        ;;                                 (s/starts-with? line starts-with))
+        ;;                               lines)))
         commit-str (bytes->str payload-bytes)
         commit-lines (s/split commit-str #"\n")
         tree-line (get-field-fn "tree" commit-lines)
-        parent-line (get-field-fn "parent" commit-lines)
+        parent-lines (get-all-fields-fn "parent" commit-lines)
         author-line (get-field-fn "author" commit-lines)
         committer-line (get-field-fn "committer" commit-lines)
         message-lines (rest (drop-while (fn [line]
                                           (not (s/blank? line)))
                                         commit-lines))
         tree (drop-line-prefix tree-line)
-        parent (drop-line-prefix parent-line)]
+        parents (map drop-line-prefix parent-lines)]
     {:commit/tree tree
-     :commit/parent parent
+     :commit/parents parents
      :commit/author (parse-author-line author-line)
      :commit/committer (parse-author-line committer-line)
      :commit/message (s/join "\n" message-lines)}))
@@ -160,16 +166,19 @@
 
 (defmethod serialize-payload [:git :commit] [_format object]
   (let [payload (:payload object)
+        parents (map (fn [parent-id]
+                       (str "parent " parent-id))
+                     (:commit/parents payload))
         commit-fields (filter (fn [elem]
                                 (not (nil? elem)))
-                              [(str "tree " (:commit/tree payload))
-                               (when (:commit/parent payload)
-                                 (str "parent " (:commit/parent payload)))
-                               (str "author " (author-line-to-string (:commit/author payload)))
-                               (str "committer " (author-line-to-string (:commit/committer payload)))
-                               ""
-                               (:commit/message payload)
-                               ""])
+                              (concat
+                               [(str "tree " (:commit/tree payload))]
+                               parents
+                               [(str "author " (author-line-to-string (:commit/author payload)))
+                                (str "committer " (author-line-to-string (:commit/committer payload)))
+                                ""
+                                (:commit/message payload)
+                                ""]))
         payload-str (s/join "\n" commit-fields)
         payload-bytes (str->bytes payload-str)
         payload-length (count payload-bytes)

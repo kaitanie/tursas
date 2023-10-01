@@ -52,8 +52,18 @@
         (storage-api/get-object! repository tree-id))
       nil)))
 
+(defn make-tree []
+  {:header {:object-type :tree}
+   :payload {}})
+
+(defn make-tree-entry-blob [key blob-id]
+  {:tree-entry/permissions default-key-permissions
+   :tree-entry/name key
+   :tree-entry/hash blob-id})
+
 (defn tree-assoc-blob [tree key blob-id]
-  (let [tree-entry 1]))
+  (let [tree-entry (make-tree-entry-blob key blob-id)]
+    (update-in tree [:payload] assoc (:tree-entry/name tree-entry) tree-entry)))
 
 (defn add-key-value [repository key value]
   (let [blob (make-blob value)

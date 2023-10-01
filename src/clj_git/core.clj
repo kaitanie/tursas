@@ -65,22 +65,24 @@
   (let [commit-id (storage-api/get-ref-revision! repository :heads branch-name)]
     (if commit-id
       (let [commit (storage-api/get-object! repository commit-id)
-            tree-id (:commit/tree-id commit)]
+            tree-id (:commit/tree commit)]
         (storage-api/get-object! repository tree-id))
       (make-tree))))
 
-(defn make-commit [author-name parent-commit-id tree-id]
+(defn make-commit [author-name parent-commit-ids tree-id]
   {:header {:object-type :commit}
    :payload {:commit/author author-name
              :commit/committer author-name
-             :commit/parent parent-commit-id
+             :commit/parents parent-commit-ids
              :commit/tree tree-id}})
 
 (defn commit [repository branch-name key value]
   (let [tree (get-commit-root-tree repository branch-name)
-        parent-commit (storage-api/get-ref-revision! repository :heads branch-name)
+        parent-commit-id (storage-api/get-ref-revision! repository :heads branch-name)
         blob (make-blob value)
         blob-id (storage-api/put-object! repository blob)
         updated-tree (tree-assoc-blob tree key blob-id)
-        tree-id (storage-api/put-object! repository updated-tree)]
-    ))
+        tree-id (storage-api/put-object! repository updated-tree)
+        commit (make-commit "test-author" [parent-commit-id] tree-id)
+        commit-id (storage-api/put-object! repository commit)]
+    (storage-api/update-ref-revision! repository :heads branch-name commit-id)))

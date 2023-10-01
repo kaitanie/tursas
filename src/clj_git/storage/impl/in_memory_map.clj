@@ -13,12 +13,15 @@
 (defn add-object [repository hash object]
   (update-in repository [:objects] assoc hash object))
 
+(defn update-ref [repository ref-type ref-name ref-value]
+  (update-in repository [:refs ref-type] assoc ref-name ref-value))
+
 (defn get-object [repository hash]
   (get-in repository [:objects hash]))
 
 (defn update-branch-ref [repository branch-name hash]
   (if (get-object repository hash)
-    (update-in repository [:refs :branches] assoc branch-name hash)
+    (update-in repository [:refs :heads] assoc branch-name hash)
     (throw (ex-info "Hash not found in object store"
                     {:hash hash}))))
 
@@ -42,4 +45,11 @@
     hash))
 
 (defmethod storage-api/get-ref-revision! :in-memory-map [repo ref-type ref-name]
-  (get-in repo [:refs ref-type ref-name]))
+  (let [repository-ref (get-in repo [:repository])]
+    (get-in @repository-ref [:refs ref-type ref-name])))
+
+(defmethod storage-api/update-ref-revision! :in-memory-map [repo ref-type ref-name ref-value]
+  (let [repository-ref (get-in repo [:repository])]
+    (cond (= ref-type :heads) (dosync
+                               (alter repository-ref update-branch-ref ref-name ref-value))
+          :else (throw (ex-info "Unknown ref-type" {:ref-type ref-type :ref-name ref-name})))))

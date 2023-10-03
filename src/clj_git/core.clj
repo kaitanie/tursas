@@ -62,13 +62,10 @@
   (let [tree-entry (make-tree-entry-blob key blob-id)]
     (update-in tree [:payload] assoc (:tree-entry/name tree-entry) tree-entry)))
 
-(defn add-key-value [repository key value]
-  (let [blob (make-blob value)
-        blob-id (storage-api/put-object! repository blob)]))
-
 (defn get-commit-root-tree [repository branch-name]
   (let [commit-id (storage-api/get-ref-revision! repository :heads branch-name)]
-    (if commit-id
+    (if (and commit-id
+             (seq commit-id))
       (let [commit (storage-api/get-object! repository commit-id)
             tree-id (get-in commit [:payload :commit/tree])]
         (storage-api/get-object! repository tree-id))

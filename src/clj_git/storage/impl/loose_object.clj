@@ -25,7 +25,10 @@
   (cond (= ref-type :heads) (let [ref-file-path (make-path [(:repository/path repo) "refs" (name ref-type) ref-name])
                                   ref-file (io/file ref-file-path)]
                               (if (.exists ref-file)
-                                (slurp ref-file)
+                                (let [commit-id (slurp ref-file)]
+                                  (if (seq commit-id)
+                                    commit-id
+                                    nil))
                                 (throw (ex-info "Reference not found"
                                                 {:ref-type ref-type
                                                  :ref-name ref-name
@@ -97,7 +100,7 @@
     (let [prefix (subs object-id 0 2)
           filename (subs object-id 2)
           repository-path (:repository/path repo)
-          object-path (str repository-path (java.io.File/separator) prefix (java.io.File/separator) filename)
+          object-path (str repository-path (java.io.File/separator) "objects" (java.io.File/separator) prefix (java.io.File/separator) filename)
           object-file (io/file object-path)]
       (if (.exists object-file)
         (hash-utils/parse-object (inflate-file object-file))
@@ -114,4 +117,5 @@
         repository-path (:repository/path repo)
         filename (str repository-path (java.io.File/separator) "objects" (java.io.File/separator) prefix (java.io.File/separator) file)]
     (io/make-parents (io/file filename))
-    (deflate-file filename file-bytes)))
+    (deflate-file filename file-bytes)
+    hash))

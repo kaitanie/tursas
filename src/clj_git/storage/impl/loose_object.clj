@@ -93,7 +93,8 @@
     (make-file heads true)
     (make-file master false "")
     (make-file config false default-git-config)
-    (make-file head false default-git-head)))
+    (make-file head false default-git-head)
+    repo-config))
 
 (defmethod storage-api/get-object! :git-bare-lo-store [repo object-id]
   (if (> (count object-id) 2)

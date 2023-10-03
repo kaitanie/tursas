@@ -32,7 +32,8 @@
 (defn make-sha1-git-repo-config []
   {:repository/hash-implementation :sha1
    :repository/storage-engine :git-bare-lo-store
-   :repository/path "/home/mael/tmp/t0repo"})
+   :repository/timezone "+0300"
+   :repository/path "/home/mael/tmp/t1repo"})
 
 (defn make-blob [m]
   {:header {:object-type :blob}
@@ -71,12 +72,21 @@
         (storage-api/get-object! repository tree-id))
       (make-tree))))
 
-(defn make-commit [author-name parent-commit-ids tree-id]
-  {:header {:object-type :commit}
-   :payload {:commit/author author-name
-             :commit/committer author-name
-             :commit/parents parent-commit-ids
-             :commit/tree tree-id}})
+(defn make-author [role name timestamp timezone]
+  {:author/role role
+   :author/name name
+   :author/timestamp timestamp
+   :author/timezone timezone})
+
+(defn make-commit [author-name timezone parent-commit-ids tree-id]
+  (let [timestamp (str (System/currentTimeMillis))
+        author (make-author :author author-name timestamp timezone)
+        committer (make-author :committer author-name timestamp timezone)]
+    {:header {:object-type :commit}
+     :payload {:commit/author author
+               :commit/committer committer
+               :commit/parents parent-commit-ids
+               :commit/tree tree-id}}))
 
 (defn commit [repository branch-name key value]
   (let [tree (get-commit-root-tree repository branch-name)
@@ -87,7 +97,7 @@
         blob-id (storage-api/put-object! repository blob)
         updated-tree (tree-assoc-blob tree key blob-id)
         tree-id (storage-api/put-object! repository updated-tree)
-        commit (make-commit "test-author" parent-commit-ids tree-id)
+        commit (make-commit "test-author" (:repository/timezone repository) parent-commit-ids tree-id)
         commit-id (storage-api/put-object! repository commit)]
     (storage-api/update-ref-revision! repository :heads branch-name commit-id)))
 

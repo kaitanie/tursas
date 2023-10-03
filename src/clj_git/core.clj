@@ -29,6 +29,11 @@
   {:repository/hash-implementation :sha1
    :repository/storage-engine :in-memory-map})
 
+(defn make-sha1-git-repo-config []
+  {:repository/hash-implementation :sha1
+   :repository/storage-engine :git-bare-lo-store
+   :repository/path "/home/mael/tmp/t0repo"})
+
 (defn make-blob [m]
   {:header {:object-type :blob}
    :payload m})

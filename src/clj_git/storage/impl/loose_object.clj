@@ -18,12 +18,32 @@
 (defmethod storage-api/test-mm :git-loose-object [ctx value]
   "Loose object stuff called!")
 
+(defn make-path [path-segments]
+  (s/join (java.io.File/separator) path-segments))
 
 (defmethod storage-api/get-ref-revision! :git-bare-lo-store [repo ref-type ref-name]
-  )
+  (cond (= ref-type :heads) (let [ref-file-path (make-path [(:repository/path repo) "refs" (name ref-type) ref-name])
+                                  ref-file (io/file ref-file-path)]
+                              (if (.exists ref-file)
+                                (slurp ref-file)
+                                (throw (ex-info "Reference not found"
+                                                {:ref-type ref-type
+                                                 :ref-name ref-name
+                                                 :path ref-file-path}))))
+        :else (throw (ex-info "Unknown ref-type"
+                              {:ref-type ref-type}))))
 
 (defmethod storage-api/update-ref-revision! :git-bare-lo-store [repo ref-type ref-name ref-value]
-  )
+  (cond (= ref-type :heads) (let [ref-file-path (make-path [(:repository/path repo) "refs" (name ref-type) ref-name])
+                                  ref-file (io/file ref-file-path)]
+                              (if (.exists ref-file)
+                                (spit ref-file ref-value)
+                                (throw (ex-info "Reference not found"
+                                                {:ref-type ref-type
+                                                 :ref-name ref-name
+                                                 :path ref-file-path}))))
+        :else (throw (ex-info "Unknown ref-type"
+                              {:ref-type ref-type}))))
 
 
 (defn stream-input-bytes
@@ -63,23 +83,27 @@
   (let [repository-path (:repository/path repo-config)
         object-store (io/file (str repository-path (java.io.File/separator) "objects"))
         heads (io/file (str repository-path (java.io.File/separator) "refs" (java.io.File/separator) "heads"))
+        master (io/file (make-path [repository-path "refs" "heads" "master"]))
         config (io/file (str repository-path (java.io.File/separator) "config"))
         head (io/file (str repository-path (java.io.File/separator) "HEAD"))]
     (make-file object-store true)
-    (make-file heads false)
+    (make-file heads true)
+    (make-file master false "")
     (make-file config false default-git-config)
     (make-file head false default-git-head)))
 
 (defmethod storage-api/get-object! :git-bare-lo-store [repo object-id]
-  (let [prefix (subs object-id 0 2)
-        filename (subs object-id 2)
-        repository-path (:repository/path repo)
-        object-path (str repository-path (java.io.File/separator) prefix (java.io.File/separator) filename)
-        object-file (io/file object-path)]
-    (if (.exists object-file)
-      (hash-utils/parse-object (inflate-file object-file))
-      (throw (ex-info "Object not found"
-                      {:object-id object-id})))))
+  (if (> (count object-id) 2)
+    (let [prefix (subs object-id 0 2)
+          filename (subs object-id 2)
+          repository-path (:repository/path repo)
+          object-path (str repository-path (java.io.File/separator) prefix (java.io.File/separator) filename)
+          object-file (io/file object-path)]
+      (if (.exists object-file)
+        (hash-utils/parse-object (inflate-file object-file))
+        (throw (ex-info "Object not found"
+                        {:object-id object-id}))))
+    nil))
 
 (defmethod storage-api/put-object! :git-bare-lo-store [repo object]
   (let [serialized-object (hash-utils/serialize-payload :git object)

@@ -78,7 +78,7 @@
    :author/timestamp timestamp
    :author/timezone timezone})
 
-(defn make-commit [author-name timezone parent-commit-ids tree-id]
+(defn make-commit [author-name message timezone parent-commit-ids tree-id]
   (let [timestamp (str (System/currentTimeMillis))
         author (make-author :author author-name timestamp timezone)
         committer (make-author :committer author-name timestamp timezone)]
@@ -86,6 +86,7 @@
      :payload {:commit/author author
                :commit/committer committer
                :commit/parents parent-commit-ids
+               :commit/message message
                :commit/tree tree-id}}))
 
 (defn commit [repository branch-name key value]
@@ -97,7 +98,8 @@
         blob-id (storage-api/put-object! repository blob)
         updated-tree (tree-assoc-blob tree key blob-id)
         tree-id (storage-api/put-object! repository updated-tree)
-        commit (make-commit "test-author" (:repository/timezone repository) parent-commit-ids tree-id)
+        message (str "Update " key)
+        commit (make-commit "test-author <>" message (:repository/timezone repository) parent-commit-ids tree-id)
         commit-id (storage-api/put-object! repository commit)]
     (storage-api/update-ref-revision! repository :heads branch-name commit-id)))
 

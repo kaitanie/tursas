@@ -104,7 +104,7 @@
           object-path (str repository-path (java.io.File/separator) "objects" (java.io.File/separator) prefix (java.io.File/separator) filename)
           object-file (io/file object-path)]
       (if (.exists object-file)
-        (hash-utils/parse-object (inflate-file object-file))
+        (hash-utils/parse-object repo (inflate-file object-file))
         (throw (ex-info "Object not found"
                         {:object-id object-id}))))
     nil))

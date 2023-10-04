@@ -27,13 +27,14 @@
 
 (defn make-sha1-map-repo-config []
   {:repository/hash-implementation :sha1
-   :repository/storage-engine :in-memory-map})
+   :repository/storage-engine :in-memory-map
+   :repository/timezone "+0300"})
 
 (defn make-sha1-git-repo-config []
   {:repository/hash-implementation :sha1
    :repository/storage-engine :git-bare-lo-store
    :repository/timezone "+0300"
-   :repository/path "/home/mael/tmp/t1repo"})
+   :repository/path "/home/mael/tmp/t3repo"})
 
 (defn make-blob [m]
   {:header {:object-type :blob}
@@ -79,7 +80,7 @@
    :author/timezone timezone})
 
 (defn make-commit [author-name message timezone parent-commit-ids tree-id]
-  (let [timestamp (str (System/currentTimeMillis))
+  (let [timestamp (str (long (/ (System/currentTimeMillis) 1000.0)))
         author (make-author :author author-name timestamp timezone)
         committer (make-author :committer author-name timestamp timezone)]
     {:header {:object-type :commit}

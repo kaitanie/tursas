@@ -24,6 +24,7 @@
   are not yet supported by this version of the engine."
   (:require [clj-git.storage.api :as storage-api]
             [clj-git.hash-utils :as hash-utils]
+            [clj-git.objects :as objects]
             [clojure.string :as s]
             [clojure.edn :as edn]
             [clojure.java.io :as io])
@@ -135,13 +136,13 @@
                         {:object-id object-id}))))))
 
 (defmethod storage-api/put-object! :git-bare-lo-store [repo object]
-  (let [serialized-object (hash-utils/serialize-payload :git object)
+  (let [valid-object (objects/validate-object object)
+        serialized-object (hash-utils/serialize-payload :git valid-object)
         hash (hash-utils/hash-it repo serialized-object)
         prefix (subs hash 0 2)
         file (subs hash 2)
-        file-bytes (hash-utils/serialize-payload :git object)
         repository-path (:repository/path repo)
         filename (make-path [repository-path "objects" prefix file])]
     (io/make-parents (io/file filename))
-    (deflate-file filename file-bytes)
+    (deflate-file filename serialized-object)
     hash))

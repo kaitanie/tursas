@@ -11,6 +11,7 @@
   arrays. This allows the repository structure to be inspected a bit
   more easily."
   (:require [clj-git.storage.api :as storage-api]
+            [clj-git.objects :as objects]
             [clj-git.hash-utils :as hash-utils]))
 
 (defn make-repository []
@@ -47,7 +48,7 @@
 (defmethod storage-api/put-object! :in-memory-map [repo object]
   (let [hash (hash-utils/hash-it repo (hash-utils/serialize-payload :git object))
         repository-ref (get-in repo [:repository])
-        object-payload-with-header (select-keys object [:header :payload])]
+        object-payload-with-header (objects/validate-object (select-keys object [:header :payload]))]
     (dosync
      (alter repository-ref add-object hash object-payload-with-header))
     hash))

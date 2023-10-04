@@ -4,7 +4,8 @@
   Example usages can be found in the file example.clj."
   (:require [clj-git.storage.api :as storage-api]
             [clj-git.storage.impl.loose-object]
-            [clj-git.storage.impl.in-memory-map]))
+            [clj-git.storage.impl.in-memory-map]
+            [clj-git.objects :as objects]))
 
 (defn make-blob [m]
   {:header {:object-type :blob}
@@ -21,17 +22,8 @@
 ;;     {:header {:object-type :tree}
 ;;      :payload entries-with-perms}))
 
-(defn make-tree []
-  {:header {:object-type :tree}
-   :payload {}})
-
-(defn make-tree-entry-blob [key blob-id]
-  {:tree-entry/permissions default-key-permissions
-   :tree-entry/name key
-   :tree-entry/hash blob-id})
-
 (defn tree-assoc-blob [tree key blob-id]
-  (let [tree-entry (make-tree-entry-blob key blob-id)]
+  (let [tree-entry (objects/make-tree-entry-blob key blob-id)]
     (update-in tree [:payload] assoc (:tree-entry/name tree-entry) tree-entry)))
 
 (defn get-commit-root-tree [repository branch-name]
@@ -41,24 +33,7 @@
       (let [commit (storage-api/get-object! repository commit-id)
             tree-id (get-in commit [:payload :commit/tree])]
         (storage-api/get-object! repository tree-id))
-      (make-tree))))
-
-(defn make-author [role name timestamp timezone]
-  {:author/role role
-   :author/name name
-   :author/timestamp timestamp
-   :author/timezone timezone})
-
-(defn make-commit [author-name message timezone parent-commit-ids tree-id]
-  (let [timestamp (str (long (/ (System/currentTimeMillis) 1000.0)))
-        author (make-author :author author-name timestamp timezone)
-        committer (make-author :committer author-name timestamp timezone)]
-    {:header {:object-type :commit}
-     :payload {:commit/author author
-               :commit/committer committer
-               :commit/parents parent-commit-ids
-               :commit/message message
-               :commit/tree tree-id}}))
+      (objects/make-tree))))
 
 (defn commit [repository branch-name key value]
   (let [tree (get-commit-root-tree repository branch-name)
@@ -70,7 +45,7 @@
         updated-tree (tree-assoc-blob tree key blob-id)
         tree-id (storage-api/put-object! repository updated-tree)
         message (str "Update " key)
-        commit (make-commit "test-author <>" message (:repository/timezone repository) parent-commit-ids tree-id)
+        commit (objects/make-commit "test-author <>" message (:repository/timezone repository) parent-commit-ids tree-id)
         commit-id (storage-api/put-object! repository commit)]
     (storage-api/update-ref-revision! repository :heads branch-name commit-id)))
 

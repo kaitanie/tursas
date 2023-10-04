@@ -68,3 +68,27 @@
   {:tree-entry/permissions default-key-permissions
    :tree-entry/name key
    :tree-entry/hash blob-id})
+
+(defn make-author [role name timestamp timezone]
+  {:author/role role
+   :author/name name
+   :author/timestamp timestamp
+   :author/timezone timezone})
+
+(defn make-commit [author-name message timezone parent-commit-ids tree-id]
+  (let [timestamp (str (long (/ (System/currentTimeMillis) 1000.0)))
+        author (make-author :author author-name timestamp timezone)
+        committer (make-author :committer author-name timestamp timezone)]
+    {:header {:object-type :commit}
+     :payload {:commit/author author
+               :commit/committer committer
+               :commit/parents parent-commit-ids
+               :commit/message message
+               :commit/tree tree-id}}))
+
+
+(defn validate-object [object]
+  (if (m/validate StorableObject object)
+    object
+    (throw (ex-info "Invalid object"
+                    (me/humanize (m/explain StorableObject object))))))

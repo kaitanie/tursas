@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest testing is]]
             [clojure.java.io :as io]
             [clj-git.hash-utils :as hash-utils]
+            [clj-git.objects :as objects]
             [clj-git.storage.impl.loose-object :as git-store]))
 
 (defonce repository {:repository/hash-implementation :sha1})
@@ -88,4 +89,20 @@
                                              :message "Merge branch 'another-branch'"}}]
       (is (= expected-commit commit)))))
 
-;; (deftest test-git-object-parsing-serialization (testing "Serialize blobs" (let [] (is true))))
+(deftest test-git-object-parsing-serialization
+  (testing "Serialize/deserialize blobs"
+    (let [blob (objects/make-blob {:name "foobar" :number 42})
+          serialized-blob (hash-utils/serialize-payload :git blob)
+          deserialized-blob (hash-utils/parse-object {:repository/hash-implementation :sha1} serialized-blob)]
+      (is blob deserialized-blob)))
+  (testing "Serialize/deserialize trees"
+    (let [tree-entry (objects/make-tree-entry-blob "foo" "3c30d3c34ae6ccde38a54bf4f95eca9de613c221")
+          tree (update-in (objects/make-tree) [:payload] assoc "foo" tree-entry)
+          serialized-tree (hash-utils/serialize-payload :git tree)
+          deserialized-tree (hash-utils/parse-object {:repository/hash-implementation :sha1} serialized-tree)]
+      (is tree deserialized-tree)))
+  (testing "Serialize/deserialize commits"
+    (let [commit (objects/make-commit "pk <>" "Updateing stuff" "+0300" '() "3c30d3c34ae6ccde38a54bf4f95eca9de613c221")
+          serialized-commit (hash-utils/serialize-payload :git commit)
+          deserialized-commit (hash-utils/parse-object {:repository/hash-implementation :sha1} serialized-commit)]
+      (is commit deserialized-commit))))

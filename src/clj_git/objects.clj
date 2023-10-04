@@ -4,12 +4,6 @@
             [malli.dev :as dev]
             [malli.experimental :as mx]))
 
-;; Implement object schemas using Malli
-
-;; Object contains
-
-;; - :header
-
 (def example-header {:object-type :blob     ;; Required, value can be :blob, :tree or :commit
                      :payload-length 72     ;; Optional number of serialized bytes (inflated, loose object store)
                      })
@@ -45,7 +39,7 @@
   bytes?)
 
 (def ObjectPayloadBlob
-  bytes?)
+  any?)
 
 (def TreeEntry
   [:map
@@ -53,45 +47,40 @@
    [:tree-entry/name string?]
    [:tree-entry/hash string?]])
 
-;;tree cd2a3c78b4eda1567c99dc88eb447d1720018cb9
-;;parent fd909f64f92b201c26f1aeb716cee026826d8fcb
-;;author Pekka Kaitaniemi <pekka.kaitaniemi@tocoman.com> 1689000011 +0300
-;;committer Pekka Kaitaniemi <pekka.kaitaniemi@tocoman.com> 1689000011 +0300
-;;
-;;Add some links
-
 (def Author
   [:map
    [:author/name string?]
-   [:author/timestamp string?]])
+   [:author/role string?]
+   [:author/timestamp string?]
+   [:author/timezone string?]])
 
-(def Commit
+(def ObjectPayloadCommit
   [:map
    [:commit/hash {:optional true} string?]
    [:commit/tree string?]
-   [:commit/parent string?]
+   [:commit/parents [:vector string?]]
    [:commit/author Author]
    [:commit/committer Author]])
 
 (def ObjectPayloadTree
-  [:vector TreeEntry])
+  [:map-of :string TreeEntry])
 
 (def StorableObject
   [:map
    [:header ObjectHeader]
-   [:payload [:or ObjectPayloadBlob ObjectPayloadTree]]])
+   [:payload [:or ObjectPayloadBlob ObjectPayloadTree ObjectPayloadCommit]]])
 
-(def Address
-  [:map
-   [:id string?]
-   [:tags [:set keyword?]]
-   [:address
-    [:map
-     [:street string?]
-     [:city string?]
-     [:zip int?]
-     [:lonlat [:tuple double? double?]]]]])
+(def default-key-permissions "100644")
 
-(def addr {:id "foo"
-           :tags #{:a :b :c}
-           :address {:street "foo" :city "bar" :zip 10 :lonlat [1.0 2.0]}})
+(defn make-blob [m]
+  {:header {:object-type :blob}
+   :payload m})
+
+(defn make-tree []
+  {:header {:object-type :tree}
+   :payload {}})
+
+(defn make-tree-entry-blob [key blob-id]
+  {:tree-entry/permissions default-key-permissions
+   :tree-entry/name key
+   :tree-entry/hash blob-id})

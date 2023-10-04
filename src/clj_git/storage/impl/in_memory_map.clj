@@ -1,9 +1,17 @@
 (ns clj-git.storage.impl.in-memory-map
+  "This namespace contains an in-memory implementation of the repository
+  storage engine. It uses an STM ref that contains the mutable object
+  store. The store contains a map for Git objects and another map
+  structure for storing refs (such as branches).
+
+  This storage implementation uses the same Git object serialization
+  based hashing as the Git loose object store so the object hashes
+  should be identical. The values themselves are stored as plain old
+  Clojure data structures without serializing them to byte
+  arrays. This allows the repository structure to be inspected a bit
+  more easily."
   (:require [clj-git.storage.api :as storage-api]
             [clj-git.hash-utils :as hash-utils]))
-
-(defmethod storage-api/test-mm :in-memory-map [ctx value]
-  "In memory map implementation called.")
 
 (defn make-repository []
   {:objects {}

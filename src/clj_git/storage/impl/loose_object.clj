@@ -1,4 +1,27 @@
 (ns clj-git.storage.impl.loose-object
+  "Implements object store using Git loose objects in the bare
+  repository format. In the bare format there is only the Git object
+  store. The files, or in the case of this packages, keys and values
+  are not checked out.
+
+  In the loose object format the repository objects are stored in
+  files under the objects directory. The objects are first stored in a
+  format that contains a header describing object type and content
+  length, then a NULL byte and the object contents after that. The
+  actual parsing part of the Git object formats is implemented in
+  the clj-git.hash-utils namespace.
+
+  The hashes are calculated using the serialized format of the Git
+  objects. After hashing, the object contents are compressed using the
+  deflate algorithm and stored under the objects directory in
+  subdirectories whose names are the first two characters of the
+  content hash and file names consist of the rest of the hash.
+
+  The loose object format bare repository created using this storage
+  engine is compatible with the Git command line tools and at least
+  some history visualization tools. If the repository grows too large
+  Git will automagically upgrade the format to use pack files which
+  are not yet supported by this version of the engine."
   (:require [clj-git.storage.api :as storage-api]
             [clj-git.hash-utils :as hash-utils]
             [clojure.string :as s]
@@ -14,9 +37,6 @@
 
 (def default-git-head
   "ref: refs/heads/master")
-
-(defmethod storage-api/test-mm :git-loose-object [ctx value]
-  "Loose object stuff called!")
 
 (defn make-path [path-segments]
   (s/join (java.io.File/separator) path-segments))
@@ -57,7 +77,7 @@
     (.toByteArray byte-array-output-stream)))
 
 (defn stream-output-bytes
-  "Stream bytes from the input stream into a byte array."
+  "Stream bytes from the input byte array into the output stream."
   [output-stream bytes]
   (let [byte-array-input-stream (java.io.ByteArrayInputStream. bytes)]
     (io/copy byte-array-input-stream output-stream)))
@@ -71,6 +91,8 @@
     (stream-output-bytes out bytes)))
 
 (defn make-file
+  "Make a file or a directory, optionally files can be pre-filled with
+  content."
   ([file directory? file-content]
    (when (not (.exists file))
      (io/make-parents file)
@@ -84,11 +106,11 @@
 
 (defmethod storage-api/initialize! :git-bare-lo-store [repo-config]
   (let [repository-path (:repository/path repo-config)
-        object-store (io/file (str repository-path (java.io.File/separator) "objects"))
-        heads (io/file (str repository-path (java.io.File/separator) "refs" (java.io.File/separator) "heads"))
+        object-store (io/file (make-path [repository-path "objects"]))
+        heads (io/file (make-path [repository-path "refs" "heads"]))
         master (io/file (make-path [repository-path "refs" "heads" "master"]))
-        config (io/file (str repository-path (java.io.File/separator) "config"))
-        head (io/file (str repository-path (java.io.File/separator) "HEAD"))]
+        config (io/file (make-path [repository-path "config"]))
+        head (io/file (make-path [repository-path "HEAD"]))]
     (make-file object-store true)
     (make-file heads true)
     (make-file master false "")
@@ -101,7 +123,7 @@
     (let [prefix (subs object-id 0 2)
           filename (subs object-id 2)
           repository-path (:repository/path repo)
-          object-path (str repository-path (java.io.File/separator) "objects" (java.io.File/separator) prefix (java.io.File/separator) filename)
+          object-path (make-path [repository-path "objects" prefix filename])
           object-file (io/file object-path)]
       (if (.exists object-file)
         (hash-utils/parse-object repo (inflate-file object-file))
@@ -116,7 +138,7 @@
         file (subs hash 2)
         file-bytes (hash-utils/serialize-payload :git object)
         repository-path (:repository/path repo)
-        filename (str repository-path (java.io.File/separator) "objects" (java.io.File/separator) prefix (java.io.File/separator) file)]
+        filename (make-path [repository-path "objects" prefix file])]
     (io/make-parents (io/file filename))
     (deflate-file filename file-bytes)
     hash))

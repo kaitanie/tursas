@@ -44,6 +44,7 @@
   (bytes->hex (DigestUtils/sha512 bytes)))
 
 (defmulti hash-length-bytes
+  "Return the length of the hash byte array."
   (fn [repository]
     (:repository/hash-implementation repository)))
 
@@ -68,13 +69,16 @@
     {:object-type (keyword object-type)
      :payload-length (Long/parseLong object-length)}))
 
-(defmulti parse-payload (fn [header _payload-bytes]
+(defmulti parse-payload (fn [_repository header _payload-bytes]
                           (:object-type header)))
 
-(defmethod parse-payload :blob [_header payload-bytes]
+(defmethod parse-payload :blob [_repository _header payload-bytes]
   payload-bytes)
 
-(defn pop-tree-entry [hash-length bytes]
+(defn take-tree-entry
+  "Take one tree entry from the beginning of the byte array. Return the
+  parsed tree entry and the rest of the (unparsed) bytes."
+  [hash-length bytes]
   (let [variable-length-block (byte-array (take-while not-null? bytes))
         remaining-entry-bytes (byte-array (rest (drop-while not-null? bytes)))
         hash-block (byte-array (take hash-length remaining-entry-bytes))
@@ -85,17 +89,18 @@
                    :tree-entry/hash (bytes->hex hash-block)}
      :rest rest-of-bytes}))
 
-(defmethod parse-payload :tree [_header payload-bytes]
+(defmethod parse-payload :tree [repository _header payload-bytes]
   (loop [remaining-bytes payload-bytes
          tree-entries {}]
     (if (empty? remaining-bytes)
       tree-entries
-      (let [parse-result (pop-tree-entry remaining-bytes)
+      (let [hash-length (hash-length-bytes repository)
+            parse-result (take-tree-entry hash-length remaining-bytes)
             tree-entry (:first-entry parse-result)]
         (recur (:rest parse-result) (assoc tree-entries (:tree-entry/name tree-entry) tree-entry))))))
 
 (defn parse-author-line
-  "Drop the first heading of the author "
+  "Parse author/committer lines."
   [author-line]
   (let [[role & author-rest] (s/split author-line #" ")
         [timezone timestamp & author-name-email-fields] (reverse author-rest)
@@ -113,7 +118,7 @@
                                    (not (s/blank? (str char))))
                                  line)))))
 
-(defmethod parse-payload :commit [_header payload-bytes]
+(defmethod parse-payload :commit [_repository _header payload-bytes]
   (let [get-all-fields-fn (fn [starts-with lines]
                             (filter (fn [line]
                                       (s/starts-with? line starts-with))
@@ -208,7 +213,7 @@
     (if (= (count payload-bytes) (:payload-length header))
       {:header header
        :hash (hash-it repository bytes)
-       :payload (parse-payload header payload-bytes)}
+       :payload (parse-payload repository header payload-bytes)}
       (throw (ex-info "Payload length does not match the length given in the object header."
                       {:payload-length (count payload-bytes)
                        :expected-length (:payload-length header)})))))

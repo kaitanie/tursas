@@ -25,6 +25,7 @@
   (:require [clj-git.storage.api :as storage-api]
             [clj-git.hash-utils :as hash-utils]
             [clojure.string :as s]
+            [clojure.edn :as edn]
             [clojure.java.io :as io])
   (:import [java.util.zip InflaterInputStream DeflaterOutputStream]))
 
@@ -46,9 +47,8 @@
                                   ref-file (io/file ref-file-path)]
                               (if (.exists ref-file)
                                 (let [commit-id (slurp ref-file)]
-                                  (if (seq commit-id)
-                                    commit-id
-                                    nil))
+                                  (when (seq commit-id)
+                                    commit-id))
                                 (throw (ex-info "Reference not found"
                                                 {:ref-type ref-type
                                                  :ref-name ref-name
@@ -119,17 +119,20 @@
     repo-config))
 
 (defmethod storage-api/get-object! :git-bare-lo-store [repo object-id]
-  (if (> (count object-id) 2)
+  (when (> (count object-id) 2)
     (let [prefix (subs object-id 0 2)
           filename (subs object-id 2)
           repository-path (:repository/path repo)
           object-path (make-path [repository-path "objects" prefix filename])
           object-file (io/file object-path)]
       (if (.exists object-file)
-        (hash-utils/parse-object repo (inflate-file object-file))
+        (let [object (hash-utils/parse-object repo (inflate-file object-file))]
+          (if (= (get-in object [:header :object-type]) :blob)
+            (assoc object
+                   :payload (edn/read-string (hash-utils/bytes->str (:payload object))))
+            object))
         (throw (ex-info "Object not found"
-                        {:object-id object-id}))))
-    nil))
+                        {:object-id object-id}))))))
 
 (defmethod storage-api/put-object! :git-bare-lo-store [repo object]
   (let [serialized-object (hash-utils/serialize-payload :git object)

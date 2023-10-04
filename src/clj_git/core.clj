@@ -1,21 +1,10 @@
 (ns clj-git.core
-  "Core high level functions for interacting with the repository."
+  "Core high level functions for interacting with the repository.
+
+  Example usages can be found in the file example.clj."
   (:require [clj-git.storage.api :as storage-api]
             [clj-git.storage.impl.loose-object]
-            [clj-git.storage.impl.in-memory-map]
-            [clj-git.hash-utils :as hash-utils]))
-
-
-(defn make-sha1-map-repo-config []
-  {:repository/hash-implementation :sha1
-   :repository/storage-engine :in-memory-map
-   :repository/timezone "+0300"})
-
-(defn make-sha1-git-repo-config []
-  {:repository/hash-implementation :sha1
-   :repository/storage-engine :git-bare-lo-store
-   :repository/timezone "+0300"
-   :repository/path "/home/mael/tmp/t3repo"})
+            [clj-git.storage.impl.in-memory-map]))
 
 (defn make-blob [m]
   {:header {:object-type :blob}

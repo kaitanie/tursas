@@ -10,25 +10,9 @@
 
 (def example-object {:header {:object-type :tree, :payload-length 232},
                      :hash "cd2a3c78b4eda1567c99dc88eb447d1720018cb9",
-                     :payload
-                     [#:tree-entry{:permissions "100644",
-                                   :name "README",
-                                   :hash "fa83e85e64d361e50c2013acfced94ebb0b9430d"}
-                      #:tree-entry{:permissions "100644",
-                                   :name "README",
-                                   :hash "476ab72e7034581d86f4bb0f705d9aabc8a7e5d1"}
-                      #:tree-entry{:permissions "100644",
-                                   :name "README_link",
-                                   :hash "fa83e85e64d361e50c2013acfced94ebb0b9430d"}
-                      #:tree-entry{:permissions "120000",
-                                   :name "README_symlink",
-                                   :hash "100b93820ade4c16225673b4ca62bb3ade63c313"}
-                      #:tree-entry{:permissions "40000",
-                                   :name "test",
-                                   :hash "3fe8b9f491e172c8e36156008cdbce5a7c84384a"}
-                      #:tree-entry{:permissions "120000",
-                                   :name "test_symlink",
-                                   :hash "30d74d258442c7c65512eafab474568dd706c430"}]} )
+                     :payload {"README" #:tree-entry{:permissions "100644",
+                                                     :name "README",
+                                                     :hash "fa83e85e64d361e50c2013acfced94ebb0b9430d"}}})
 
 (def ObjectHeader
   [:map

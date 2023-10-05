@@ -40,7 +40,9 @@ namespace](https://github.com/kaitanie/tursas/blob/master/src/tursas/example.clj
 ;; Returns ("foo")
 ```
 
-![An example screenshot of the Git loose object repository history.](./tursas.png)
+An example screenshot of history accumulated in a Git loose object
+repository after committing a few updates: ![An example screenshot of
+the Git loose object repository history.](./tursas.png)
 
 ## Extensible storage
 

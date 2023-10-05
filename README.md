@@ -56,7 +56,8 @@ can be found in the impl subdirectory.
 
 ### In memory store
 
-This namespace contains an in-memory implementation of the repository
+The [namespace `tursas.storage.impl.in-memory-map`](https://github.com/kaitanie/tursas/blob/master/src/tursas/storage/impl/in_memory_map.clj)
+contains an in-memory implementation of the repository
 storage engine. It uses an STM ref that contains the mutable object
 store. The store contains a map for Git objects and another map
 structure for storing refs (such as branches).
@@ -69,17 +70,17 @@ allows the repository structure to be inspected a bit more easily.
 
 ### Git loose object store
 
-Implements object store using Git loose objects in the bare repository
-format. In the bare format there is only the Git object store. The
-files, or in the case of this packages, keys and values are not
-checked out.
+The [namespace `tursas.storage.impl.loose-object`](https://github.com/kaitanie/tursas/blob/master/src/tursas/storage/impl/loose_object.clj)
+contains an object store implementation using Git loose objects in the bare repository
+format. In the bare format the repository contains is only the Git data store without
+any checked out files.
 
 In the loose object format the repository objects are stored in files
-under the objects directory. The objects are first stored in a format
+under the objects directory. The objects are stored in a format
 that contains a header describing object type and content length, then
 a NULL byte and the object contents after that. The actual parsing
-part of the Git object formats is implemented in the tursas.hash-utils
-namespace.
+part of the Git object formats is implemented in the [tursas.hash-utils
+namespace](https://github.com/kaitanie/tursas/blob/master/src/tursas/hash_utils.clj).
 
 The hashes are calculated using the serialized format of the Git
 objects. After hashing, the object contents are compressed using the
@@ -89,6 +90,6 @@ hash and file names consist of the rest of the hash.
 
 The loose object format bare repository created using this storage
 engine is compatible with the Git command line tools and at least some
-history visualization tools. If the repository grows too large Git
-will automagically upgrade the format to use pack files which are not
-yet supported by this version of the engine.
+history visualization tools (such as `gitk`). If the repository grows too large Git
+may automagically upgrade the format to use pack files which are not
+yet supported by this version of the storage engine.

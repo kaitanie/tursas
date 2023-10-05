@@ -1,9 +1,9 @@
-(ns clj-git.hash-utils-test
+(ns tursas.hash-utils-test
   (:require [clojure.test :refer [deftest testing is]]
             [clojure.java.io :as io]
-            [clj-git.hash-utils :as hash-utils]
-            [clj-git.objects :as objects]
-            [clj-git.storage.impl.loose-object :as git-store]))
+            [tursas.hash-utils :as hash-utils]
+            [tursas.objects :as objects]
+            [tursas.storage.impl.loose-object :as git-store]))
 
 (defonce repository {:repository/hash-implementation :sha1})
 

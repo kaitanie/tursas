@@ -1,4 +1,4 @@
-(ns clj-git.hash-utils
+(ns tursas.hash-utils
   "Utility functions for hashing objects and parsing Git file
   formats. The hashes are calculated from data stored in the same
   format that Git uses because this allows us to produce the same

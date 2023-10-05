@@ -1,4 +1,4 @@
-(ns clj-git.example
+(ns tursas.example
   "This file demonstrates simple usages of this library. The first
   example uses in-memory storage and the second one uses Git loose
   object store.
@@ -7,8 +7,8 @@
   Value of key foo =  {:a 1, :b 2}
   Value of key foo after update =  {:x 1.0, :y 2.0}
   All keys after updates =  (bar foo)"
-  (:require [clj-git.core :as tursas]
-            [clj-git.storage.api :as storage-api]))
+  (:require [tursas.core :as tursas]
+            [tursas.storage.api :as storage-api]))
 
 (defn make-sha1-map-repo-config []
   {:repository/hash-implementation :sha1

@@ -1,4 +1,4 @@
-(ns clj-git.storage.impl.in-memory-map
+(ns tursas.storage.impl.in-memory-map
   "This namespace contains an in-memory implementation of the repository
   storage engine. It uses an STM ref that contains the mutable object
   store. The store contains a map for Git objects and another map
@@ -10,9 +10,9 @@
   Clojure data structures without serializing them to byte
   arrays. This allows the repository structure to be inspected a bit
   more easily."
-  (:require [clj-git.storage.api :as storage-api]
-            [clj-git.objects :as objects]
-            [clj-git.hash-utils :as hash-utils]))
+  (:require [tursas.storage.api :as storage-api]
+            [tursas.objects :as objects]
+            [tursas.hash-utils :as hash-utils]))
 
 (defn make-repository []
   {:objects {}

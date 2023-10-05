@@ -1,7 +1,7 @@
-(ns clj-git.core-test
+(ns tursas.core-test
   (:require [clojure.test :refer [deftest testing is use-fixtures]]
-            [clj-git.core :as tursas]
-            [clj-git.storage.api :as storage-api]))
+            [tursas.core :as tursas]
+            [tursas.storage.api :as storage-api]))
 
 (def repo-config {:repository/hash-implementation :sha1
                   :repository/storage-engine :in-memory-map

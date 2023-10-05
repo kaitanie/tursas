@@ -1,4 +1,4 @@
-(ns clj-git.storage.api
+(ns tursas.storage.api
   "Storage API defined using multimethods. Various storage engines can
   be added by making suitable implementation of these multimethods. In
   this repository there are two implementations: an in-memory store

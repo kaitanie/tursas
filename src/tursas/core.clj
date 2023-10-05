@@ -1,11 +1,11 @@
-(ns clj-git.core
+(ns tursas.core
   "Core high level functions for interacting with the repository.
 
   Example usages can be found in the file example.clj."
-  (:require [clj-git.storage.api :as storage-api]
-            [clj-git.storage.impl.loose-object]
-            [clj-git.storage.impl.in-memory-map]
-            [clj-git.objects :as objects]))
+  (:require [tursas.storage.api :as storage-api]
+            [tursas.storage.impl.loose-object]
+            [tursas.storage.impl.in-memory-map]
+            [tursas.objects :as objects]))
 
 (defn make-blob [m]
   {:header {:object-type :blob}

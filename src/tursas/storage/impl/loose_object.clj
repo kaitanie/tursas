@@ -1,4 +1,4 @@
-(ns clj-git.storage.impl.loose-object
+(ns tursas.storage.impl.loose-object
   "Implements object store using Git loose objects in the bare
   repository format. In the bare format there is only the Git object
   store. The files, or in the case of this packages, keys and values
@@ -9,7 +9,7 @@
   format that contains a header describing object type and content
   length, then a NULL byte and the object contents after that. The
   actual parsing part of the Git object formats is implemented in
-  the clj-git.hash-utils namespace.
+  the tursas.hash-utils namespace.
 
   The hashes are calculated using the serialized format of the Git
   objects. After hashing, the object contents are compressed using the
@@ -22,9 +22,9 @@
   some history visualization tools. If the repository grows too large
   Git will automagically upgrade the format to use pack files which
   are not yet supported by this version of the engine."
-  (:require [clj-git.storage.api :as storage-api]
-            [clj-git.hash-utils :as hash-utils]
-            [clj-git.objects :as objects]
+  (:require [tursas.storage.api :as storage-api]
+            [tursas.hash-utils :as hash-utils]
+            [tursas.objects :as objects]
             [clojure.string :as s]
             [clojure.edn :as edn]
             [clojure.java.io :as io])

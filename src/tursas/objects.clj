@@ -1,4 +1,4 @@
-(ns clj-git.objects
+(ns tursas.objects
   (:require [malli.core :as m]
             [malli.error :as me]
             [malli.dev :as dev]

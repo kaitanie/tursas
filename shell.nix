@@ -1,8 +1,8 @@
 let pkgs = import <nixpkgs> {};
     stdenv = pkgs.stdenv;
 in rec {
-    leanheatEnv = stdenv.mkDerivation rec {
-        name = "clj-git-dev";
+    tursasEnv = stdenv.mkDerivation rec {
+        name = "tursas-dev";
         version = "1.0.0";
 #        src = ./.;
         buildInputs = [ pkgs.openjdk

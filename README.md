@@ -23,7 +23,7 @@ added, we can support hierarchical keys.
 
 ## Usage
 
-An example how to use the library can be found in the
+A full example how to use the library can be found in the
 [`tursas.example`
 namespace](https://github.com/kaitanie/tursas/blob/master/src/tursas/example.clj).
 
@@ -33,18 +33,24 @@ namespace](https://github.com/kaitanie/tursas/blob/master/src/tursas/example.clj
 
 ;; Get value of a key from the repository
 (tursas/get-value repo "master" "foo")
+;; Returns {:a 1 :b 2}
 
 ;; List all keys
 (tursas/get-keys repo "master")
+;; Returns ("foo")
 ```
+
+![An example screenshot of the Git loose object repository history.](./tursas.png)
 
 ## Extensible storage
 
-Storage API defined using multimethods. Various storage engines can be
-added by making suitable implementation of these multimethods. In this
-repository there are two implementations: an in-memory store using
-Clojure data structures and a Git bare repository using loose object
-format. The implementation can be found in the impl subdirectory.
+Storage API is defined using multimethods in namespace
+[tursas.storage.api](https://github.com/kaitanie/tursas/blob/master/src/tursas/storage/api.clj).
+Various storage engines can be added by making suitable implementation
+of the multimethods in this API namespace. In this repository there are two
+implementations: an in-memory store using Clojure data structures and
+a Git bare repository using loose object format. The implementation
+can be found in the impl subdirectory.
 
 ### In memory store
 
@@ -54,7 +60,7 @@ store. The store contains a map for Git objects and another map
 structure for storing refs (such as branches).
 
 This storage implementation uses the same Git object serialization
-based hashing as the Git loose object store so the object hashes
+based hashing as the Git loose object store so their object hashes
 should be identical. The values themselves are stored as plain old
 Clojure data structures without serializing them to byte arrays. This
 allows the repository structure to be inspected a bit more easily.

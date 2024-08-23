@@ -25,7 +25,7 @@ added, we can support hierarchical keys.
 
 A full example how to use the library can be found in the
 [`tursas.example`
-namespace](https://github.com/kaitanie/tursas/blob/master/src/tursas/example.clj).
+namespace](https://git.sr.ht/~kaitanie/tursas/tree/master/item/src/tursas/example.clj).
 
 ```clojure
 ;; Commit a new value to the repository
@@ -47,7 +47,7 @@ the Git loose object repository history.](./tursas.png)
 ## Extensible storage
 
 Storage API is defined using multimethods in namespace
-[tursas.storage.api](https://github.com/kaitanie/tursas/blob/master/src/tursas/storage/api.clj).
+[tursas.storage.api](https://git.sr.ht/~kaitanie/tursas/tree/master/item/src/tursas/storage/api.clj).
 Various storage engines can be added by making suitable implementation
 of the multimethods in this API namespace. In this repository there are two
 implementations: an in-memory store using Clojure data structures and
@@ -56,7 +56,7 @@ can be found in the impl subdirectory.
 
 ### In memory store
 
-The [namespace `tursas.storage.impl.in-memory-map`](https://github.com/kaitanie/tursas/blob/master/src/tursas/storage/impl/in_memory_map.clj)
+The [namespace `tursas.storage.impl.in-memory-map`](https://git.sr.ht/~kaitanie/tursas/tree/master/item/src/tursas/storage/impl/in_memory_map.clj)
 contains an in-memory implementation of the repository
 storage engine. It uses an STM ref that contains the mutable object
 store. The store contains a map for Git objects and another map
@@ -70,7 +70,7 @@ allows the repository structure to be inspected a bit more easily.
 
 ### Git loose object store
 
-The [namespace `tursas.storage.impl.loose-object`](https://github.com/kaitanie/tursas/blob/master/src/tursas/storage/impl/loose_object.clj)
+The [namespace `tursas.storage.impl.loose-object`](https://git.sr.ht/~kaitanie/tursas/tree/master/item/src/tursas/storage/impl/loose_object.clj)
 contains an object store implementation using Git loose objects in the bare repository
 format. In the bare format the repository contains is only the Git data store without
 any checked out files.
@@ -80,7 +80,7 @@ under the objects directory. The objects are stored in a format
 that contains a header describing object type and content length, then
 a NULL byte and the object contents after that. The actual parsing
 part of the Git object formats is implemented in the [tursas.hash-utils
-namespace](https://github.com/kaitanie/tursas/blob/master/src/tursas/hash_utils.clj).
+namespace](https://git.sr.ht/~kaitanie/tursas/tree/master/item/src/tursas/hash_utils.clj).
 
 The hashes are calculated using the serialized format of the Git
 objects. After hashing, the object contents are compressed using the
